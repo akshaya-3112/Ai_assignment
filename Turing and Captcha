@@ -1,0 +1,89 @@
+TURING TEST:
+Goal:
+To determine whether a machine can behave like a human in conversation.
+
+Components:
+1. Interrogator: 
+  >Human judge
+  >Sends questions to two participants
+2.Human Participant:
+  >Real human answering questions
+3.AI Agent:
+  >Chatbot/AI system generating responses
+4.Communication Interface
+  >Text-based system
+  >Prevents judge from knowing who is human
+5.Evaluation Module
+  >Judge decides which participant is human
+
+Architecture:
+
+User Interface (Chat Window)
+        │
+        ▼
+Interrogator / Judge
+        │
+ ┌──────┴───────┐
+ ▼              ▼
+Human          AI Agent
+Participant     NLP Model
+
+----------------------------------------------------------------------------------
+CAPTCHA:
+Goal:
+Differentiate human users from bots.
+
+Components:
+1.Client Interface:
+  >Website form
+  >Displays CAPTCHA:
+2.CAPTCHA Generator
+  >Generates distorted text/image:
+3.Challenge Database
+  >Stores correct answers temporarily:
+4.Verification Engine
+  >Compares user input with correct answer
+5.Bot Detection Logic
+  >Rate limits or blocks bots
+Architecture:
+User Browser
+     │
+     ▼
+Web Server
+     │
+     ▼
+CAPTCHA Generator
+     │
+     ▼
+Challenge Stored in DB
+     │
+     ▼
+User Input Verification
+     │
+     ▼
+Access Granted / Denied
+---------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
