@@ -2,11 +2,10 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define N 10
+#define N 5
 #define INF 9999
 
 typedef struct {
-    int x, y;
     int g, h, f;
     int parentX, parentY;
 } Node;
@@ -20,29 +19,31 @@ int isUnblocked(int grid[N][N], int x, int y) {
 }
 
 int heuristic(int x1, int y1, int x2, int y2) {
-    return abs(x1 - x2) + abs(y1 - y2); // Manhattan
+    return abs(x1 - x2) + abs(y1 - y2);
 }
 
-void printPath(Node nodes[N][N], int gx, int gy) {
+void printPath(Node nodes[N][N], int sx, int sy, int gx, int gy) {
     int pathX[100], pathY[100];
     int len = 0;
 
     int x = gx, y = gy;
 
-    while (!(nodes[x][y].parentX == x && nodes[x][y].parentY == y)) {
+    while (!(x == sx && y == sy)) {
         pathX[len] = x;
         pathY[len] = y;
-        int tempX = nodes[x][y].parentX;
-        int tempY = nodes[x][y].parentY;
-        x = tempX;
-        y = tempY;
+
+        int px = nodes[x][y].parentX;
+        int py = nodes[x][y].parentY;
+
+        x = px;
+        y = py;
         len++;
     }
 
-    pathX[len] = x;
-    pathY[len] = y;
+    pathX[len] = sx;
+    pathY[len] = sy;
 
-    printf("Path:\n");
+    printf("Path: ");
     for (int i = len; i >= 0; i--) {
         printf("(%d,%d) ", pathX[i], pathY[i]);
     }
@@ -52,11 +53,9 @@ void printPath(Node nodes[N][N], int gx, int gy) {
 int aStar(int grid[N][N], int sx, int sy, int gx, int gy, Node nodes[N][N]) {
     int closed[N][N] = {0};
 
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
+    for (int i = 0; i < N; i++)
+        for (int j = 0; j < N; j++)
             nodes[i][j].f = INF;
-        }
-    }
 
     nodes[sx][sy].g = 0;
     nodes[sx][sy].h = heuristic(sx, sy, gx, gy);
@@ -67,12 +66,12 @@ int aStar(int grid[N][N], int sx, int sy, int gx, int gy, Node nodes[N][N]) {
     while (1) {
         int minF = INF, x = -1, y = -1;
 
-        // Find lowest f
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
                 if (!closed[i][j] && nodes[i][j].f < minF) {
                     minF = nodes[i][j].f;
-                    x = i; y = j;
+                    x = i;
+                    y = j;
                 }
             }
         }
@@ -80,14 +79,14 @@ int aStar(int grid[N][N], int sx, int sy, int gx, int gy, Node nodes[N][N]) {
         if (x == -1) return 0;
 
         if (x == gx && y == gy) {
-            printPath(nodes, gx, gy);
+            printPath(nodes, sx, sy, gx, gy);
             return 1;
         }
 
         closed[x][y] = 1;
 
-        int dx[] = {1,-1,0,0};
-        int dy[] = {0,0,1,-1};
+        int dx[] = {1, -1, 0, 0};
+        int dy[] = {0, 0, 1, -1};
 
         for (int i = 0; i < 4; i++) {
             int nx = x + dx[i];
@@ -112,49 +111,83 @@ int aStar(int grid[N][N], int sx, int sy, int gx, int gy, Node nodes[N][N]) {
 
 void simulateUGV(int grid[N][N], int sx, int sy, int gx, int gy) {
     int currentX = sx, currentY = sy;
+    int steps = 0, maxSteps = 100;
 
     printf("Starting UGV Simulation...\n");
 
-    while (!(currentX == gx && currentY == gy)) {
+    while (!(currentX == gx && currentY == gy) && steps < maxSteps) {
 
         Node nodes[N][N];
 
         printf("\nPlanning from (%d,%d)...\n", currentX, currentY);
 
         if (!aStar(grid, currentX, currentY, gx, gy, nodes)) {
-            printf("No path available!\n");
+            printf("❌ No path available!\n");
             return;
         }
 
-        // Move ONE STEP along path
-        int nextX = nodes[gx][gy].parentX;
-        int nextY = nodes[gx][gy].parentY;
+        int nextX = gx;
+        int nextY = gy;
+
+        int safety = 0;
+
+        while (!(nodes[nextX][nextY].parentX == currentX &&
+                 nodes[nextX][nextY].parentY == currentY)) {
+
+            int px = nodes[nextX][nextY].parentX;
+            int py = nodes[nextX][nextY].parentY;
+
+            if (px == nextX && py == nextY) {
+                printf("⚠️ Path reconstruction failed. Stopping.\n");
+                return;
+            }
+
+            nextX = px;
+            nextY = py;
+
+            safety++;
+            if (safety > 50) {
+                printf("⚠️ Infinite loop avoided. Stopping.\n");
+                return;
+            }
+        }
+
+        if (nextX == currentX && nextY == currentY) {
+            printf("⚠️ UGV stuck! Stopping.\n");
+            return;
+        }
 
         currentX = nextX;
         currentY = nextY;
 
         printf("Moved to (%d,%d)\n", currentX, currentY);
 
-        // 🔴 Dynamic obstacle appears
-        if (currentX == 2 && currentY == 0) {
-            printf("Dynamic obstacle detected at (3,0)! Replanning...\n");
-            grid[3][0] = 1;
+        // Dynamic obstacle example
+        if (steps == 2) {
+            printf("⚠️ Dynamic obstacle added at (2,2)\n");
+            grid[2][2] = 1;
         }
+
+        steps++;
     }
 
-    printf("\n🎯 Goal Reached!\n");
+    if (currentX == gx && currentY == gy)
+        printf("\n🎯 Goal Reached in %d steps!\n", steps);
+    else
+        printf("\n⛔ Stopped (limit reached)\n");
 }
 
 int main() {
-    int grid[N][N] = {0};
-
-    // Static obstacles
-    grid[1][2] = 1;
-    grid[2][2] = 1;
-    grid[3][2] = 1;
+    int grid[N][N] = {
+        {0,0,0,0,0},
+        {0,1,1,0,0},
+        {0,0,0,0,0},
+        {0,1,0,1,0},
+        {0,0,0,0,0}
+    };
 
     int startX = 0, startY = 0;
-    int goalX = 7, goalY = 7;
+    int goalX = 4, goalY = 4;
 
     simulateUGV(grid, startX, startY, goalX, goalY);
 
